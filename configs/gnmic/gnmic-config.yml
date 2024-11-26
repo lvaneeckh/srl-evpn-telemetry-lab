@@ -1,0 +1,176 @@
+# Copyright 2020 Nokia
+# Licensed under the BSD 3-Clause License.
+# SPDX-License-Identifier: BSD-3-Clause
+
+username: admin
+timeout: 10s
+
+common_sros_subscriptions: &common_sros_subs
+  insecure: true
+  password: admin
+  subscriptions:
+      - sros-if-stats
+      - sros-bgp-stats
+      - sros-service-stats
+
+common_srl_subscriptions: &common_srl_subs
+  port: 57400
+  skip-verify: true
+  insecure: false
+  password: NokiaSrl1!
+  subscriptions:
+    - srl-if-stats
+    - srl-bgp
+    - srl-system-performance
+    - srl-routes
+    - srl-bridge
+    - srl-apps
+    - srl-net-instance
+
+targets:
+  leaf1: *common_srl_subs
+  leaf2: *common_srl_subs
+  leaf3: *common_srl_subs
+  leaf4: *common_srl_subs
+  spine1: *common_srl_subs
+  spine2: *common_srl_subs
+  dcgw1: *common_sros_subs
+  dcgw2: *common_sros_subs
+
+subscriptions:
+ ## SROS ##
+  sros-if-stats:
+    paths:
+      - /state/port[port-id=*]/oper-state
+      - /state/port[port-id=*]/ethernet/statistics
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+            
+  sros-bgp-stats:
+    paths:
+      - /state/router[router-name=*]/bgp/statistics/peers
+      - /state/router[router-name=*]/bgp/neighbor[ip-address=*]/statistics/session-state
+      - /state/router[router-name=*]/bgp/neighbor[ip-address=*]/statistics/family-prefix/ipv4
+      - /state/router[router-name=*]/bgp/neighbor[ip-address=*]/statistics/family-prefix/evpn
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+
+  sros-service-stats:
+    paths:
+      - /state/service/vpls[service-name=*]/oper-state
+      - /state/service/vprn[service-name=*]/oper-state
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+  
+  ## SRL ##
+  srl-system-performance:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /platform/control[slot=*]/cpu[index=all]/total
+      - /platform/control[slot=*]/memory
+  srl-if-stats:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /interface[name=ethernet-1/*]/oper-state
+      - /interface[name=ethernet-1/*]/statistics
+      - /interface[name=ethernet-1/*]/traffic-rate
+  srl-routes:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /network-instance[name=*]/route-table/ipv4-unicast/statistics/
+      - /network-instance[name=*]/route-table/ipv6-unicast/statistics/
+  srl-bgp:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /network-instance[name=*]/protocols/bgp/statistics
+  srl-bridge:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /network-instance[name=*]/bridge-table/statistics/
+  srl-apps:
+    paths:
+      - /system/app-management/application[name=*]
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+  srl-net-instance:
+    paths:
+      - /network-instance[name=*]/oper-state
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+
+outputs:
+  prom-output:
+    type: prometheus
+    listen: :9273
+    event-processors:
+      - trim-prefixes
+      - rename-srl-interface
+      - oper-state-to-int
+      - rename-port-sros
+      - rename-port-value-sros
+
+processors:
+  trim-prefixes:
+    event-strings:
+      value-names:
+        - "^/state/.*"
+      transforms:
+        - trim-prefix:
+            apply-on: "name"
+            prefix: "/state/"
+
+  oper-state-to-int:
+    event-strings:
+      value-names:
+        - ".*"
+      transforms:
+        - replace:
+            apply-on: "value"
+            old: "up"
+            new: "1"
+        - replace:
+            apply-on: "value"
+            old: "down"
+            new: "0"
+  rename-srl-interface:
+    event-strings:
+      tag-names:
+        - "^interface_name"
+      transforms:
+        - replace:
+            apply-on: "value"
+            old: "ethernet-(\\d+)/(\\d+)"
+            new: "e$1-$2"
+  rename-port-sros:
+    event-strings:
+      tag-names:
+        - "^port_port-id"
+      transforms:
+        - replace:
+            apply-on: "name"
+            old: "port_port-id"
+            new: "interface_name"
+  rename-port-value-sros:
+    event-strings:
+      tag-names:
+        - "^interface_name"
+      transforms:
+        - replace:
+            apply-on: "value"
+            old: ".*/c(\\d+)(/\\d+)?"
+            new: "eth$1"

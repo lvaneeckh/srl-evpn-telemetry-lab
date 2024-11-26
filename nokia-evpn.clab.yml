@@ -1,0 +1,168 @@
+name: evpn
+prefix: ""
+
+mgmt:
+  network: evpn
+  ipv4-subnet: 172.80.81.0/24
+
+topology:
+  kinds:
+    srl:
+      image: ghcr.io/nokia/srlinux:24.10.1
+    vr-sros:
+      image: registry.srlinux.dev/pub/vr-sros:24.7.R1 # internal image, external users should build/use their own image
+      license: ./license.txt # license file must be obtained from Nokia
+    linux:
+      image: ghcr.io/srl-labs/network-multitool
+
+  nodes:
+    dcgw1:
+      kind: vr-sros
+      type: sr-1
+      startup-config: ./configs/fabric/dcgw1.cfg
+      mgmt-ipv4: 172.80.81.8
+
+    dcgw2:
+      kind: vr-sros
+      type: sr-1
+      startup-config: ./configs/fabric/dcgw2.cfg
+      mgmt-ipv4: 172.80.81.9
+
+    spine1:
+      kind: srl
+      type: ixrd3
+      startup-config: ./configs/fabric/spine1.cfg
+      mgmt-ipv4: 172.80.81.21
+
+    spine2:
+      kind: srl
+      type: ixrd3
+      startup-config: ./configs/fabric/spine2.cfg
+      mgmt-ipv4: 172.80.81.22
+
+    leaf1:
+      kind: srl
+      type: ixrd2
+      startup-config: ./configs/fabric/leaf1.cfg
+      mgmt-ipv4: 172.80.81.11
+
+    leaf2:
+      kind: srl
+      type: ixrd2
+      startup-config: ./configs/fabric/leaf2.cfg
+      mgmt-ipv4: 172.80.81.12
+
+    leaf3:
+      kind: srl
+      type: ixrd2
+      startup-config: ./configs/fabric/leaf3.cfg
+      mgmt-ipv4: 172.80.81.13
+
+    leaf4:
+      kind: srl
+      type: ixrd2
+      startup-config: ./configs/fabric/leaf4.cfg
+      mgmt-ipv4: 172.80.81.14
+
+    client1:
+      kind: linux
+      mgmt-ipv4: 172.80.81.31
+      binds:
+        - ./configs/fabric/eth1.sh:/tmp/eth1.sh
+      exec:
+        - bash /tmp/eth1.sh
+        - ip addr add 192.168.1.10/24 dev bond0.1
+
+    client2:
+      kind: linux
+      mgmt-ipv4: 172.80.81.32
+      binds:
+        - ./configs/fabric/eth1.sh:/tmp/eth1.sh
+      exec:
+        - bash /tmp/eth1.sh
+        - ip addr add 192.168.1.20/24 dev bond0.1
+
+    ### TELEMETRY STACK ###
+    gnmic:
+      kind: linux
+      mgmt-ipv4: 172.80.81.41
+      image: ghcr.io/openconfig/gnmic:0.39.1
+      binds:
+        - configs/gnmic/gnmic-config.yml:/gnmic-config.yml:ro
+      cmd: --config /gnmic-config.yml --log subscribe
+      group: "10" # group 10 is assigned to the nodes of a telemetry stack
+
+    prometheus:
+      kind: linux
+      mgmt-ipv4: 172.80.81.42
+      image: quay.io/prometheus/prometheus:v2.54.1
+      binds:
+        - configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      cmd: --config.file=/etc/prometheus/prometheus.yml
+      ports:
+        - 9090:9090
+      group: "10"
+
+    grafana:
+      kind: linux
+      mgmt-ipv4: 172.80.81.43
+      image: grafana/grafana:11.2.0
+      binds:
+        - configs/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+        - configs/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+        - configs/grafana/dashboards:/var/lib/grafana/dashboards
+      ports:
+        - 3000:3000
+      env:
+        HTTPS_PROXY: "http://10.158.101.16:8080"
+        GF_INSTALL_PLUGINS: "andrewbmchugh-flow-panel"
+        # env vars to enable anonymous access
+        GF_ORG_ROLE: "Admin"
+        GF_ORG_NAME: "Main Org"
+        GF_AUTH_ANONYMOUS_ENABLED: "true"
+        GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+        GF_AUTH_ANONYMOUS: "true"
+        GF_AUTH_OAUTH_AUTO_LOGIN: "true"
+      group: "10"
+
+    ### LOGGING STACK ###
+    promtail:
+      kind: linux
+      mgmt-ipv4: 172.80.81.45
+      image: grafana/promtail:3.2.0
+      binds:
+        - configs/promtail:/etc/promtail
+      cmd: --config.file=/etc/promtail/promtail-config.yml
+      ports:
+        - 9080:9080
+
+    loki:
+      kind: linux
+      mgmt-ipv4: 172.80.81.46
+      image: grafana/loki:3.2.0
+      binds:
+        - configs/loki:/etc/loki
+      cmd: --config.file=/etc/loki/loki-config.yml
+      ports:
+        - 3100:3100
+
+  links:
+    - endpoints: ["dcgw1:eth1", "spine1:e1-31"]
+    - endpoints: ["dcgw1:eth2", "spine2:e1-31"]
+    - endpoints: ["dcgw2:eth1", "spine1:e1-32"]
+    - endpoints: ["dcgw2:eth2", "spine2:e1-32"]
+
+    - endpoints: ["spine1:e1-11", "leaf1:e1-51"]
+    - endpoints: ["spine1:e1-12", "leaf2:e1-51"]
+    - endpoints: ["spine1:e1-13", "leaf3:e1-51"]
+    - endpoints: ["spine1:e1-14", "leaf4:e1-51"]
+
+    - endpoints: ["spine2:e1-11", "leaf1:e1-52"]
+    - endpoints: ["spine2:e1-12", "leaf2:e1-52"]
+    - endpoints: ["spine2:e1-13", "leaf3:e1-52"]
+    - endpoints: ["spine2:e1-14", "leaf4:e1-52"]
+
+    - endpoints: ["leaf1:e1-1", "client1:eth1"]
+    - endpoints: ["leaf2:e1-1", "client1:eth2"]
+    - endpoints: ["leaf3:e1-1", "client2:eth1"]
+    - endpoints: ["leaf4:e1-1", "client2:eth2"]
