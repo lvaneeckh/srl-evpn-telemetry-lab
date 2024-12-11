@@ -1,0 +1,1 @@
+iperf3 -s -p 5204 -D > iperf4.log

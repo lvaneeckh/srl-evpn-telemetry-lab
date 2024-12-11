@@ -1,0 +1,1 @@
+iperf3 -s -p 5202 -D > iperf2.log

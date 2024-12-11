@@ -19,48 +19,48 @@ topology:
     dcgw1:
       kind: vr-sros
       type: sr-1
-      startup-config: ./configs/fabric/dcgw1.cfg
+      startup-config: ./configs/fabric/dcgw1.partial.cfg
       mgmt-ipv4: 172.80.81.8
 
     dcgw2:
       kind: vr-sros
       type: sr-1
-      startup-config: ./configs/fabric/dcgw2.cfg
+      startup-config: ./configs/fabric/dcgw2.partial.cfg
       mgmt-ipv4: 172.80.81.9
 
     spine1:
       kind: srl
-      type: ixrd3
+      type: ixrd3l
       startup-config: ./configs/fabric/spine1.cfg
       mgmt-ipv4: 172.80.81.21
 
     spine2:
       kind: srl
-      type: ixrd3
+      type: ixrd3l
       startup-config: ./configs/fabric/spine2.cfg
       mgmt-ipv4: 172.80.81.22
 
     leaf1:
       kind: srl
-      type: ixrd2
+      type: ixrd2l
       startup-config: ./configs/fabric/leaf1.cfg
       mgmt-ipv4: 172.80.81.11
 
     leaf2:
       kind: srl
-      type: ixrd2
+      type: ixrd2l
       startup-config: ./configs/fabric/leaf2.cfg
       mgmt-ipv4: 172.80.81.12
 
     leaf3:
       kind: srl
-      type: ixrd2
+      type: ixrd2l
       startup-config: ./configs/fabric/leaf3.cfg
       mgmt-ipv4: 172.80.81.13
 
     leaf4:
       kind: srl
-      type: ixrd2
+      type: ixrd2l
       startup-config: ./configs/fabric/leaf4.cfg
       mgmt-ipv4: 172.80.81.14
 
@@ -69,18 +69,46 @@ topology:
       mgmt-ipv4: 172.80.81.31
       binds:
         - ./configs/fabric/eth1.sh:/tmp/eth1.sh
+        - ./configs/client1:/config
       exec:
         - bash /tmp/eth1.sh
         - ip addr add 192.168.1.10/24 dev bond0.1
+        - iperf3 -s -p 5201 -D > iperf1.log
 
     client2:
       kind: linux
       mgmt-ipv4: 172.80.81.32
       binds:
         - ./configs/fabric/eth1.sh:/tmp/eth1.sh
+        - ./configs/client2:/config
       exec:
         - bash /tmp/eth1.sh
         - ip addr add 192.168.1.20/24 dev bond0.1
+        - iperf3 -s -p 5202 -D > iperf2.log
+
+    client3:
+      kind: linux
+      mgmt-ipv4: 172.80.81.33
+      binds:
+        - ./configs/client3:/config
+      exec:
+        - ip link add link eth1 name eth1.10 type vlan id 10
+        - ifconfig eth1 down
+        - ifconfig eth1 up
+        - ip addr add 192.168.1.30/24 dev eth1.10
+        - iperf3 -s -p 5203 -D > iperf3.log
+
+    client4:
+      kind: linux
+      mgmt-ipv4: 172.80.81.34
+      binds:
+        - ./configs/client4:/config
+      exec:
+        - ip link add link eth1 name eth1.10 type vlan id 10
+        - ifconfig eth1 down
+        - ifconfig eth1 up
+        - ip addr add 192.168.1.40/24 dev eth1.10
+        - iperf3 -s -p 5204 -D > iperf4.log
 
     ### TELEMETRY STACK ###
     gnmic:
@@ -147,10 +175,13 @@ topology:
         - 3100:3100
 
   links:
+  
     - endpoints: ["dcgw1:eth1", "spine1:e1-31"]
     - endpoints: ["dcgw1:eth2", "spine2:e1-31"]
     - endpoints: ["dcgw2:eth1", "spine1:e1-32"]
     - endpoints: ["dcgw2:eth2", "spine2:e1-32"]
+    - endpoints: ["dcgw1:eth3", "client3:eth1"]
+    - endpoints: ["dcgw2:eth3", "client4:eth1"]
 
     - endpoints: ["spine1:e1-11", "leaf1:e1-51"]
     - endpoints: ["spine1:e1-12", "leaf2:e1-51"]
