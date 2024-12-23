@@ -44,6 +44,15 @@ cells:
     label: *label-config
     strokeColor:
       thresholds: *thresholds-traffic
+  dcgw1:eth3:client3:eth1:
+    dataRef: oper-state:dcgw1:eth3
+    fillColor:
+      thresholds: *thresholds-operstate
+  link_id:dcgw1:eth3:client3:eth1:
+    dataRef: dcgw1:eth3:out
+    label: *label-config
+    strokeColor:
+      thresholds: *thresholds-traffic
   dcgw2:eth1:spine1:e1-32:
     dataRef: oper-state:dcgw2:eth1
     fillColor:
@@ -59,6 +68,15 @@ cells:
       thresholds: *thresholds-operstate
   link_id:dcgw2:eth2:spine2:e1-32:
     dataRef: dcgw2:eth2:out
+    label: *label-config
+    strokeColor:
+      thresholds: *thresholds-traffic
+  dcgw2:eth3:client4:eth1:
+    dataRef: oper-state:dcgw2:eth3
+    fillColor:
+      thresholds: *thresholds-operstate
+  link_id:dcgw2:eth3:client4:eth1:
+    dataRef: dcgw2:eth3:out
     label: *label-config
     strokeColor:
       thresholds: *thresholds-traffic
@@ -311,6 +329,24 @@ cells:
       thresholds: *thresholds-operstate
   link_id:client2:eth2:leaf4:e1-1:
     dataRef: leaf4:e1-1:in
+    label: *label-config
+    strokeColor:
+      thresholds: *thresholds-traffic
+  client3:eth1:dcgw1:eth3:
+    dataRef: oper-state:client3:eth1
+    fillColor:
+      thresholds: *thresholds-operstate
+  link_id:client3:eth1:dcgw1:eth3:
+    dataRef: dcgw1:eth3:in
+    label: *label-config
+    strokeColor:
+      thresholds: *thresholds-traffic
+  client4:eth1:dcgw2:eth3:
+    dataRef: oper-state:client4:eth1
+    fillColor:
+      thresholds: *thresholds-operstate
+  link_id:client4:eth1:dcgw2:eth3:
+    dataRef: dcgw2:eth3:in
     label: *label-config
     strokeColor:
       thresholds: *thresholds-traffic
