@@ -9,4 +9,5 @@
 # -B => bind client to local IP, -P => set 8 parallel streams, 
 # -b => 200kBps for each stream, -M => Maximum Segment Size 1460 Bytes, 
 # & => run in background
-iperf3 -c 192.168.1.40 -t 10000 -i 1 -p 5204 -B 192.168.1.20 -P 8 -b 200K -M 1460 &
+#iperf3 -c 192.168.1.40 -t 10000 -i 1 -p 5204 -B 192.168.1.20 -P 8 -b 200K -M 1460 &
+iperf3 -c 2002::172:17:0:4 --bidir -t 10000 -i 1 -p 5242 -B 2002::172:17:0:2 -P 8 -b 200K -M 1460 &

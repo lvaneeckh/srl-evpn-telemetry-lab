@@ -20,29 +20,29 @@ stopTraffic() {
 
 startAll() {
     echo "Starting traffic on all clients"
-    # for SRC in {1..4}; do
-    #     for DST in {1..4}; do
-    #         if [ "$SRC" != "$DST" ]; then
-    #             docker exec client${SRC} bash /config/iperf-${SRC}-${DST}.sh &
-    #         fi
-    #     done
-    # done
-    docker exec client2 bash /config/iperf.sh &
-    docker exec client3 bash /config/iperf.sh &
-    docker exec client4 bash /config/iperf.sh &
+    for SRC in {1..4}; do
+        for DST in {1..4}; do
+            if [ "$SRC" != "$DST" ]; then
+                docker exec client${SRC} bash /config/iperf-${SRC}-${DST}.sh &
+            fi
+        done
+    done
+    # docker exec client2 bash /config/iperf.sh &
+    # docker exec client3 bash /config/iperf.sh &
+    # docker exec client4 bash /config/iperf.sh &
     wait
     echo "All traffic started"
 }
 
 stopAll() {
     echo "Stopping all traffic"
-    # for CLIENT in {1..4}; do
-    #     docker exec client${CLIENT} pkill iperf3 || true
-    #     docker exec client${CLIENT} bash /config/iperf-start-server.sh &
-    # done
-    docker exec client2 pkill iperf3 || true
-    docker exec client3 pkill iperf3 || true
-    docker exec client4 pkill iperf3 || true
+    for CLIENT in {1..4}; do
+        docker exec client${CLIENT} pkill iperf3 || true
+        docker exec client${CLIENT} bash /config/iperf-start-server.sh &
+    done
+    # docker exec client2 pkill iperf3 || true
+    # docker exec client3 pkill iperf3 || true
+    # docker exec client4 pkill iperf3 || true
     echo "All traffic stopped"
 }
 

@@ -21,48 +21,72 @@ topology:
       type: sr-1
       startup-config: ./configs/fabric/dcgw1.partial.cfg
       mgmt-ipv4: 172.80.81.8
+      labels:
+        graph-level: 2
+        graph-icon: router
 
     dcgw2:
       kind: vr-sros
       type: sr-1
       startup-config: ./configs/fabric/dcgw2.partial.cfg
       mgmt-ipv4: 172.80.81.9
+      labels:
+        graph-level: 2
+        graph-icon: router
 
     spine1:
       kind: srl
       type: ixrd3l
       startup-config: ./configs/fabric/spine1.cfg
       mgmt-ipv4: 172.80.81.21
+      labels:
+        graph-level: 3
+        graph-icon: switch
 
     spine2:
       kind: srl
       type: ixrd3l
       startup-config: ./configs/fabric/spine2.cfg
       mgmt-ipv4: 172.80.81.22
+      labels:
+        graph-level: 3
+        graph-icon: switch
 
     leaf1:
       kind: srl
       type: ixrd2l
       startup-config: ./configs/fabric/leaf1.cfg
       mgmt-ipv4: 172.80.81.11
+      labels:
+        graph-level: 4
+        graph-icon: switch
 
     leaf2:
       kind: srl
       type: ixrd2l
       startup-config: ./configs/fabric/leaf2.cfg
       mgmt-ipv4: 172.80.81.12
+      labels:
+        graph-level: 4
+        graph-icon: switch
 
     leaf3:
       kind: srl
       type: ixrd2l
       startup-config: ./configs/fabric/leaf3.cfg
       mgmt-ipv4: 172.80.81.13
+      labels:
+        graph-level: 4
+        graph-icon: switch
 
     leaf4:
       kind: srl
       type: ixrd2l
       startup-config: ./configs/fabric/leaf4.cfg
       mgmt-ipv4: 172.80.81.14
+      labels:
+        graph-level: 4
+        graph-icon: switch
 
     client1:
       kind: linux
@@ -74,9 +98,12 @@ topology:
         - bash /tmp/eth1.sh
         - ip addr add 192.168.1.10/24 dev bond0.1
         - ip -6 address add 2002::172:17:0:1/96 dev bond0.1
-        # - iperf3 -s -p 5202 -D > iperf2.log
-        # - iperf3 -s -p 5203 -D > iperf3.log
-        # - iperf3 -s -p 5204 -D > iperf4.log
+        - iperf3 -s -p 5212 -D > iperf2.log
+        - iperf3 -s -p 5213 -D > iperf3.log
+        - iperf3 -s -p 5214 -D > iperf4.log
+      labels:
+        graph-level: 5
+        graph-icon: host
 
     client2:
       kind: linux
@@ -88,7 +115,12 @@ topology:
         - bash /tmp/eth1.sh
         - ip addr add 192.168.1.20/24 dev bond0.1
         - ip -6 address add 2002::172:17:0:2/96 dev bond0.1
-        #- iperf3 -s -p 5202 -D > iperf2.log
+        - iperf3 -s -p 5221 -D > iperf1.log
+        - iperf3 -s -p 5223 -D > iperf3.log
+        - iperf3 -s -p 5224 -D > iperf4.log
+      labels:
+        graph-level: 5
+        graph-icon: host
 
     client3:
       kind: linux
@@ -103,7 +135,12 @@ topology:
         - ifconfig eth1 up
         - ip addr add 192.168.1.30/24 dev eth1.10
         - ip -6 address add 2002::172:17:0:3/96 dev eth1.10
-        #- iperf3 -s -p 5203 -D > iperf3.log
+        - iperf3 -s -p 5231 -D > iperf1.log
+        - iperf3 -s -p 5232 -D > iperf2.log
+        - iperf3 -s -p 5234 -D > iperf4.log
+      labels:
+        graph-level: 1
+        graph-icon: host
 
     client4:
       kind: linux
@@ -118,7 +155,12 @@ topology:
         - ifconfig eth1 up
         - ip addr add 192.168.1.40/24 dev eth1.10
         - ip -6 address add 2002::172:17:0:4/96 dev eth1.10
-        #- iperf3 -s -p 5204 -D > iperf4.log
+        - iperf3 -s -p 5241 -D > iperf1.log
+        - iperf3 -s -p 5242 -D > iperf2.log
+        - iperf3 -s -p 5243 -D > iperf3.log
+      labels:
+        graph-level: 1
+        graph-icon: host
 
     ### TELEMETRY STACK ###
     gnmic:
@@ -152,7 +194,6 @@ topology:
       ports:
         - 3000:3000
       env:
-        HTTPS_PROXY: "http://10.158.101.16:8080"
         GF_INSTALL_PLUGINS: "andrewbmchugh-flow-panel"
         # env vars to enable anonymous access
         GF_ORG_ROLE: "Admin"
