@@ -124,8 +124,6 @@ topology:
 
     client3:
       kind: linux
-      labels:
-        graph-level: 1
       mgmt-ipv4: 172.80.81.33
       binds:
         - ./configs/client3:/config
@@ -144,8 +142,6 @@ topology:
 
     client4:
       kind: linux
-      labels:
-        graph-level: 1
       mgmt-ipv4: 172.80.81.34
       binds:
         - ./configs/client4:/config
@@ -194,6 +190,7 @@ topology:
       ports:
         - 3000:3000
       env:
+        #HTTPS_PROXY: "add_your_proxy_here_if_needed"
         GF_INSTALL_PLUGINS: "andrewbmchugh-flow-panel"
         # env vars to enable anonymous access
         GF_ORG_ROLE: "Admin"
